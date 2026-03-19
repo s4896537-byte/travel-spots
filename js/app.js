@@ -1,37 +1,49 @@
 // js/app.js
 
-// 🔴 刪除原本的 import { createClient } ... 這行
-
 document.addEventListener('DOMContentLoaded', async () => {
-    // 檢查資源是否載入
+    // 1. 檢查必要的資源是否到位
     if (!window.supabase || !window.SUPABASE_CONFIG) {
-        console.error("Supabase SDK 或設定檔載入失敗");
+        console.error("❌ 資源未載入成功，請檢查 HTML 中的 SDK 連結或 config.js");
         return;
     }
 
-    // 初始化
-    const { createClient } = window.supabase;
-    const supabase = createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+    try {
+        // 2. 初始化 Supabase 客戶端 (將變數改名為 sbClient 避免重複宣告衝突)
+        const { createClient } = window.supabase;
+        const sbClient = createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+        
+        console.log("🚀 Supabase 初始化成功，準備抓取資料...");
 
-    // 抓取資料並渲染
-    const { data, error } = await supabase.from('travel_spots').select('*');
+        // 3. 從資料表抓取資料
+        const { data, error } = await sbClient
+            .from('travel_spots')
+            .select('*');
 
-    const listElement = document.getElementById('travel-list');
-    
-    if (error) {
-        console.error('抓取資料失敗:', error.message);
-        listElement.innerHTML = `<li>讀取錯誤: ${error.message}</li>`;
-    } else {
-        listElement.innerHTML = ''; // 清空載入中
-        if (data.length === 0) {
-            listElement.innerHTML = '<li>目前沒有資料</li>';
+        const listElement = document.getElementById('travel-list');
+
+        if (error) {
+            console.error('❌ 抓取失敗:', error.message);
+            listElement.innerHTML = `<li>讀取錯誤: ${error.message}</li>`;
+            return;
+        }
+
+        // 4. 渲染到網頁
+        listElement.innerHTML = ''; // 清空「載入中...」
+
+        if (!data || data.length === 0) {
+            listElement.innerHTML = '<li>目前資料庫沒有旅遊景點 🏖️</li>';
+            console.log("資料庫回傳空陣列，請檢查後台 Table 是否有資料");
         } else {
             data.forEach(spot => {
                 const li = document.createElement('li');
-                // 這裡請根據你資料表的欄位名稱調整，例如 spot.name
-                li.textContent = `${spot.name || '未命名地點'}`; 
+                // 💡 注意：這裡的 spot.name 必須對應你資料表的欄位名稱
+                li.textContent = `${spot.name || '未命名'} (${spot.location || '未知位置'})`;
                 listElement.appendChild(li);
             });
+            console.log("✅ 資料渲染完成:", data);
         }
+
+    } catch (err) {
+        console.error("系統執行錯誤:", err);
     }
 });
