@@ -1,47 +1,37 @@
 // js/app.js
 
-// 1. 初始化 Supabase 客戶端 (使用 CDN 載入的版本會掛載在 window.supabase 下)
-// 請確保 HTML 有載入 Supabase SDK (見下方補充)
-const { createClient } = window.supabase;
-const supabase = createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+// 🔴 刪除原本的 import { createClient } ... 這行
 
-// 2. 抓取旅遊景點的函數
-async function fetchTravelSpots() {
-    const { data, error } = await supabase
-        .from('travel_spots')
-        .select('*');
+document.addEventListener('DOMContentLoaded', async () => {
+    // 檢查資源是否載入
+    if (!window.supabase || !window.SUPABASE_CONFIG) {
+        console.error("Supabase SDK 或設定檔載入失敗");
+        return;
+    }
 
+    // 初始化
+    const { createClient } = window.supabase;
+    const supabase = createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+
+    // 抓取資料並渲染
+    const { data, error } = await supabase.from('travel_spots').select('*');
+
+    const listElement = document.getElementById('travel-list');
+    
     if (error) {
-        console.error('抓取資料失敗:', error);
-        return [];
-    }
-    return data;
-}
-
-// 3. 渲染畫面到網頁上
-async function renderSpots() {
-    const listElement = document.querySelector('ul');
-    const spots = await fetchTravelSpots();
-
-    if (spots.length > 0) {
-        // 清空原本寫死的靜態內容
-        listElement.innerHTML = ''; 
-        
-        spots.forEach(spot => {
-            const li = document.createElement('li');
-            // 這裡假設你的資料表欄位是 name 和 location，請根據實際資料表欄位修改
-            li.textContent = `${spot.name} - ${spot.location || '未知地點'}`;
-            listElement.appendChild(li);
-        });
-        
-        // 成功載入後更新標題（選配）
-        document.querySelector('h1').textContent = "Travel Spots 已連線 ✅";
+        console.error('抓取資料失敗:', error.message);
+        listElement.innerHTML = `<li>讀取錯誤: ${error.message}</li>`;
     } else {
-        console.log("目前資料庫是空的或是尚未建立 travel_spots 資料表");
+        listElement.innerHTML = ''; // 清空載入中
+        if (data.length === 0) {
+            listElement.innerHTML = '<li>目前沒有資料</li>';
+        } else {
+            data.forEach(spot => {
+                const li = document.createElement('li');
+                // 這裡請根據你資料表的欄位名稱調整，例如 spot.name
+                li.textContent = `${spot.name || '未命名地點'}`; 
+                listElement.appendChild(li);
+            });
+        }
     }
-}
-
-// 啟動程式
-document.addEventListener('DOMContentLoaded', () => {
-    renderSpots();
 });
