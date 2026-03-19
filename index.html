@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Spots</title>
 
-    <!-- ✅ 加這行（載入 CSS） -->
     <link rel="stylesheet" href="./css/style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -17,11 +18,8 @@
     <main>
         <section>
             <h2>Top Travel Destinations</h2>
-            <ul>
-                <li>Paris, France</li>
-                <li>Tokyo, Japan</li>
-                <li>New York City, USA</li>
-                <li>Sydney, Australia</li>
+            <ul id="travel-list">
+                <li>載入中...</li>
             </ul>
         </section>
     </main>
@@ -29,9 +27,9 @@
     <footer>
         <p>&copy; 2026 Travel Spots</p>
     </footer>
-<!-- ✅ 先載入 config（非常重要） -->
-<script src="./config.js"></script>
-    <!-- ✅ 加這行（載入 JS，重點🔥） -->
+
+    <script src="./config.js"></script>
+    
     <script src="./js/app.js"></script>
 
 </body>
