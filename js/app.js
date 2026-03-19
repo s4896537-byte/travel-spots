@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 3. 從資料表抓取資料
         const { data, error } = await sbClient
-            .from('travel_spots')
+            .from('travel-spots')
             .select('*');
 
         const listElement = document.getElementById('travel-list');
