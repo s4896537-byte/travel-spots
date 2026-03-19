@@ -1,36 +1,286 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Spots</title>
-
-    <link rel="stylesheet" href="./css/style.css">
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>✈️ 旅遊口袋名單</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
 </head>
 <body>
 
-    <header>
-        <h1>Welcome to Travel Spots!</h1>
-    </header>
+<!-- ===== HEADER ===== -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-icon">🗺️</span>
+      <div>
+        <h1 class="brand-title">旅遊口袋名單</h1>
+        <p class="brand-subtitle">記下每一個想去的地方</p>
+      </div>
+    </div>
+    <div class="header-stats" id="headerStats">
+      <div class="stat-chip">
+        <i class="fas fa-map-marker-alt"></i>
+        <span id="totalCount">0</span> 個景點
+      </div>
+      <div class="stat-chip visited">
+        <i class="fas fa-check-circle"></i>
+        <span id="visitedCount">0</span> 已拜訪
+      </div>
+      <div class="stat-chip plan">
+        <i class="fas fa-calendar-alt"></i>
+        <span id="planCount">0</span> 計畫中
+      </div>
+    </div>
+    <button class="btn-add-main" id="btnOpenAdd">
+      <i class="fas fa-plus"></i> 新增景點
+    </button>
+  </div>
+</header>
 
-    <main>
-        <section>
-            <h2>Top Travel Destinations</h2>
-            <ul id="travel-list">
-                <li>載入中...</li>
-            </ul>
-        </section>
-    </main>
+<!-- ===== TOOLBAR ===== -->
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <div class="search-wrap">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="searchInput" placeholder="搜尋景點、城市、國家..." class="search-input"/>
+    </div>
+    <div class="filters">
+      <select id="filterStatus" class="filter-select">
+        <option value="">所有狀態</option>
+        <option value="未去">未去</option>
+        <option value="計畫中">計畫中</option>
+        <option value="已去">已去</option>
+      </select>
+      <select id="filterCategory" class="filter-select">
+        <option value="">所有類別</option>
+        <option value="自然風景">🌿 自然風景</option>
+        <option value="文化歷史">🏛️ 文化歷史</option>
+        <option value="美食">🍜 美食</option>
+        <option value="購物">🛍️ 購物</option>
+        <option value="主題樂園">🎡 主題樂園</option>
+        <option value="海灘">🏖️ 海灘</option>
+        <option value="山岳">⛰️ 山岳</option>
+        <option value="城市探索">🏙️ 城市探索</option>
+        <option value="其他">📌 其他</option>
+      </select>
+      <select id="filterPriority" class="filter-select">
+        <option value="">所有優先度</option>
+        <option value="夢想清單">⭐ 夢想清單</option>
+        <option value="強烈想去">🔥 強烈想去</option>
+        <option value="有機會去">✅ 有機會去</option>
+        <option value="隨興">💫 隨興</option>
+      </select>
+      <select id="sortBy" class="filter-select">
+        <option value="created_at_desc">最新新增</option>
+        <option value="created_at_asc">最早新增</option>
+        <option value="name_asc">名稱 A-Z</option>
+        <option value="country_asc">國家排序</option>
+        <option value="rating_desc">評分最高</option>
+      </select>
+    </div>
+    <div class="view-toggle">
+      <button class="view-btn active" id="viewGrid" title="卡片模式"><i class="fas fa-th-large"></i></button>
+      <button class="view-btn" id="viewList" title="列表模式"><i class="fas fa-list"></i></button>
+    </div>
+  </div>
+</div>
 
-    <footer>
-        <p>&copy; 2026 Travel Spots</p>
-    </footer>
+<!-- ===== MAIN CONTENT ===== -->
+<main class="main-content">
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div class="empty-icon">🌍</div>
+    <h2>還沒有任何景點</h2>
+    <p>點擊「新增景點」按鈕，開始建立你的旅遊夢想清單吧！</p>
+    <button class="btn-add-main" onclick="openAddModal()">
+      <i class="fas fa-plus"></i> 新增第一個景點
+    </button>
+  </div>
+  <div class="loading-state" id="loadingState">
+    <div class="spinner"></div>
+    <p>載入中...</p>
+  </div>
+  <div class="spots-grid" id="spotsContainer"></div>
+</main>
 
-    <script src="./config.js"></script>
-    
-    <script src="./js/app.js"></script>
+<!-- ===== ADD / EDIT MODAL ===== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">✨ 新增旅遊景點</h2>
+      <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <form id="spotForm">
+        <input type="hidden" id="spotId" />
 
+        <div class="form-section">
+          <h3 class="form-section-title"><i class="fas fa-info-circle"></i> 基本資訊</h3>
+          <div class="form-row">
+            <div class="form-group full">
+              <label>景點名稱 <span class="required">*</span></label>
+              <input type="text" id="fName" placeholder="例如：東京晴空塔" required/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>國家 <span class="required">*</span></label>
+              <input type="text" id="fCountry" placeholder="例如：日本" required/>
+            </div>
+            <div class="form-group">
+              <label>城市 / 地區</label>
+              <input type="text" id="fCity" placeholder="例如：東京"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>類別</label>
+              <select id="fCategory">
+                <option value="">請選擇</option>
+                <option value="自然風景">🌿 自然風景</option>
+                <option value="文化歷史">🏛️ 文化歷史</option>
+                <option value="美食">🍜 美食</option>
+                <option value="購物">🛍️ 購物</option>
+                <option value="主題樂園">🎡 主題樂園</option>
+                <option value="海灘">🏖️ 海灘</option>
+                <option value="山岳">⛰️ 山岳</option>
+                <option value="城市探索">🏙️ 城市探索</option>
+                <option value="其他">📌 其他</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>狀態</label>
+              <select id="fStatus">
+                <option value="未去">未去</option>
+                <option value="計畫中">計畫中</option>
+                <option value="已去">已去</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>優先度</label>
+              <select id="fPriority">
+                <option value="有機會去">✅ 有機會去</option>
+                <option value="強烈想去">🔥 強烈想去</option>
+                <option value="夢想清單">⭐ 夢想清單</option>
+                <option value="隨興">💫 隨興</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>預算估計</label>
+              <select id="fBudget">
+                <option value="">不確定</option>
+                <option value="$">$ 便宜實惠</option>
+                <option value="$$">$$ 中等消費</option>
+                <option value="$$$">$$$ 較高消費</option>
+                <option value="$$$$">$$$$ 奢華享受</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>最佳旅遊季節</label>
+              <select id="fSeason">
+                <option value="">不限</option>
+                <option value="春">🌸 春</option>
+                <option value="夏">☀️ 夏</option>
+                <option value="秋">🍁 秋</option>
+                <option value="冬">❄️ 冬</option>
+                <option value="全年">🌍 全年皆宜</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>拜訪日期（若已去）</label>
+              <input type="date" id="fVisitedDate"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title"><i class="fas fa-star"></i> 評分與標籤</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>評分（已去景點）</label>
+              <div class="star-rating" id="starRating">
+                <span class="star" data-val="1">★</span>
+                <span class="star" data-val="2">★</span>
+                <span class="star" data-val="3">★</span>
+                <span class="star" data-val="4">★</span>
+                <span class="star" data-val="5">★</span>
+              </div>
+              <input type="hidden" id="fRating" value="0"/>
+            </div>
+            <div class="form-group">
+              <label>自訂標籤（逗號分隔）</label>
+              <input type="text" id="fTags" placeholder="例如：夜景,拍照,打卡"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title"><i class="fas fa-image"></i> 圖片與連結</h3>
+          <div class="form-row">
+            <div class="form-group full">
+              <label>景點圖片網址</label>
+              <input type="url" id="fImageUrl" placeholder="https://...（貼上圖片網址）"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group full">
+              <label>參考資料連結</label>
+              <input type="url" id="fSourceUrl" placeholder="https://...（網頁、部落格文章等）"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="form-section-title"><i class="fas fa-sticky-note"></i> 備忘筆記</h3>
+          <div class="form-group full">
+            <textarea id="fNotes" rows="4" placeholder="記下任何想法、交通方式、必吃必去、注意事項..."></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="btnCancel">取消</button>
+      <button class="btn-save" id="btnSave">
+        <i class="fas fa-save"></i> 儲存景點
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DETAIL MODAL ===== -->
+<div class="modal-overlay" id="detailOverlay">
+  <div class="modal detail-modal" id="detailModal">
+    <div class="modal-header" id="detailHeader">
+      <div>
+        <h2 id="detailName">景點名稱</h2>
+        <p id="detailLocation" class="detail-location"></p>
+      </div>
+      <button class="modal-close" id="detailClose"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="detailImageWrap" class="detail-image-wrap"></div>
+      <div class="detail-meta" id="detailMeta"></div>
+      <div class="detail-notes" id="detailNotes"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="detailEditBtn"><i class="fas fa-edit"></i> 編輯</button>
+      <button class="btn-delete" id="detailDeleteBtn"><i class="fas fa-trash"></i> 刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
