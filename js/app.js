@@ -1,3 +1,4 @@
+document.body.innerHTML = "<h1>成功上線🔥</h1>";
 // js/app.js
 
 // Importing Supabase client
