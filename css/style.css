@@ -647,7 +647,8 @@ body {
   .header-stats { display: none; }
   .brand-title { font-size: 1.15rem; }
   .toolbar-inner { padding: 10px 16px; gap: 8px; }
-  .filters { display: none; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+  .filter-select { flex: 1; min-width: 120px; font-size: 0.75rem; padding: 7px 10px; }
   .main-content { padding: 16px 14px 60px; }
   .spots-grid { grid-template-columns: 1fr; }
   .spots-grid.list-view .spot-card { grid-template-columns: 110px 1fr; }
